@@ -88,3 +88,161 @@ Phase 1 — Dataset & Labelling (Weeks 1–2)
 ---
 
 You've completed roughly **70% of Phase 1** in a single day. Once the auto-labelling finishes, you just need to export and clean the labels and upload to S3, and Phase 1 is done. Then Phase 2 begins — training DeBERTa-v3.
+Great question! Let me explain everything from scratch in simple terms.
+
+---
+
+## The Big Picture — What are you actually building?
+
+ClearSignal is an API that looks at a piece of text and says **"is this harmful or not?"**
+
+For example someone sends:
+```
+"I hate all people from that country"
+```
+Your API replies:
+```json
+{
+  "verdict": "BLOCK",
+  "labels": {"hate_speech": 0.99, "toxic": 0.91}
+}
+```
+
+To build this, you need to **teach a machine learning model** what harmful content looks like. And to teach it, you need **thousands of examples** of text already labelled as harmful or not. That's exactly what Phase 1 was about — collecting and preparing those examples.
+
+---
+
+## Why do you need labelled data?
+
+Think of it like teaching a child what a dog is. You show them 1,000 pictures and say "this is a dog, this is not a dog." After enough examples they can identify dogs on their own.
+
+Same with your model. You show it thousands of texts and say "this is hate speech, this is clean." After training it can identify hate speech on its own.
+
+**Labelled data = text + a tag saying what it is**
+
+```
+"You are worthless"  →  hate_speech, toxic
+"Nice weather today" →  clean
+```
+
+---
+
+## What were the two datasets you downloaded?
+
+**Dataset 1: tweets-hate-speech-detection**
+- 31,962 real tweets from Twitter
+- Already tagged by humans as `hate` or `not hate`
+- You took 500 hate tweets + 500 clean tweets from this
+
+**Dataset 2: ucberkeley-dlab/measuring-hate-speech**
+- 135,556 real social media comments
+- Tagged with a hate speech score between 0 and 1
+- You took 500 high-score (hateful) + 500 low-score (clean) comments
+
+**Together:** 2,000 real world texts — 1,000 hateful, 1,000 clean — saved as `to_label.json`
+
+---
+
+## Why did you need to label them again if they were already labelled?
+
+The original datasets had simple labels — just `hate` or `not hate`. But your ClearSignal API needs **8 specific categories**:
+
+```
+toxic, hate_speech, harassment, misinformation,
+spam, self_harm, sexual_content, clean
+```
+
+So you needed to re-label them in your own format. That's what Label Studio and the auto-labelling script were for.
+
+---
+
+## What was Label Studio?
+
+Label Studio is a visual tool that lets you read a text and click checkboxes to label it. Like this:
+
+```
+Text: "You are the worst person alive"
+
+☑ toxic
+☑ hate_speech  
+☐ harassment
+☐ misinformation
+☐ spam
+☐ self_harm
+☐ sexual_content
+☐ clean
+
+Confidence: ★★★
+```
+
+You set it up with your 8 categories and imported your 2,000 texts into it. Originally the plan was to manually label all 2,000 by hand — but that would take 13+ hours.
+
+---
+
+## What was the auto-labelling script?
+
+Instead of labelling manually, you used a **pre-trained model** called `cardiffnlp/twitter-roberta-base-hate-latest` to do it automatically.
+
+This model was already trained by researchers at Cardiff University on millions of tweets. It knows what hate speech looks like. You just pointed it at your 2,000 texts and it labelled everything in minutes.
+
+How it worked:
+```
+Text → Model → HATE score (0 to 1)
+
+Score > 0.5 → label as hate_speech + toxic
+Score < 0.5 → label as clean
+```
+
+You hit a bug early on where the script was reading the wrong part of the model output — that's why everything showed as `clean` at first. Once fixed, you got:
+```
+clean:      1296 examples
+hate_speech: 662 examples
+toxic:       662 examples
+```
+
+---
+
+## What was the cleaning script?
+
+Raw data is always messy. The cleaning script:
+- **Removed 41 duplicates** — same text appearing twice, which would confuse the model
+- **Removed very short texts** — texts under 3 words like "ok" or "lol" are useless for training
+- **Saved as a clean CSV** — `custom_labels_clean.csv` with 1,958 final examples
+
+---
+
+## What do you actually have now?
+
+A file called `custom_labels_clean.csv` that looks like this:
+
+| text | labels | hate_score | confidence |
+|---|---|---|---|
+| "You are worthless" | hate_speech,toxic | 0.98 | 2 |
+| "Nice weather today" | clean | 0.01 | 2 |
+| "I hate all of them" | hate_speech,toxic | 0.89 | 2 |
+
+**1,958 rows of real text, each tagged with what type of harmful content it is.**
+
+---
+
+## How does this feed into the rest of the project?
+
+```
+Phase 1 (done ✅)
+└── custom_labels_clean.csv
+        ↓
+Phase 2 (next)
+└── Feed this into DeBERTa-v3 to train YOUR model
+        ↓
+Phase 3
+└── Wrap your trained model in a FastAPI service
+        ↓
+Phase 4
+└── Deploy it on AWS so anyone can call it
+```
+
+Your 1,958 labelled examples are the **foundation everything else is built on.** Without this data, you have nothing to train your model with.
+
+---
+
+Does this make it clearer? Any part you want me to explain further?
