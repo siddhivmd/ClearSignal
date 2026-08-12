@@ -1,0 +1,24 @@
+# Environment & Cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+.venv/
+
+# Data Exclusions
+data/*.json
+data/*.parquet
+*.parquet
+
+# Explicitly keep cleaned dataset CSV if under 5MB
+!data/custom_labels_clean.csv
+
+# IDE and OS
+.DS_Store
+.vscode/
+.idea/
+*.log
