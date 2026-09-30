@@ -75,20 +75,23 @@ With 200 test texts, differences of a few points are within noise. The recall ga
 
 ## Label Scope (Phase 2 Multi-Label)
 
-The multi-label model targets 6 labels, listed under `data.labels` in `config.yaml`. `clean` is not a separate output: a text is clean when no label is positive. Every label comes from human judgments, not model predictions.
+The multi-label model targets 5 labels, listed under `data.labels` in `config.yaml`. `clean` is not a separate output: a text is clean when no label is positive. Every label comes from human judgments, not model predictions.
 
 | Label | Source dataset | Rule | Positives | Licence | Caveat |
 |---|---|---|---|---|---|
-| `toxic` | `google/civil_comments` | `toxicity >= 0.5` | ~144k | CC0 | News-site comments |
+| `toxic` | `google/civil_comments` + MHS ratings | `toxicity >= 0.5`; MHS: majority rate `insult` or `respect` >= 3 | ~144k + 770 | CC0 / CC BY 4.0 | MHS rule is an approximation (MHS has no toxicity question) |
 | `hate_speech` | `google/civil_comments` + Phase 1 datasets | `identity_attack >= 0.5`; Phase 1 `human_label` | ~13k + 999 | CC0 / dataset licences | |
-| `harassment` | `google/civil_comments` | `insult >= 0.5` or `threat >= 0.5` | ~107k | CC0 | |
-| `sexual_content` | `google/civil_comments` | `sexual_explicit >= 0.5` | ~4.7k | CC0 | Rarest Civil Comments label |
+| `harassment` | `google/civil_comments` + MHS ratings | `insult >= 0.5` or `threat >= 0.5`; MHS: majority rate `insult` or `violence` >= 3 | ~107k + 733 | CC0 / CC BY 4.0 | |
 | `spam` | `codesignal/sms-spam-collection` | `label == spam` | ~750 | CC BY 4.0 | SMS messages, not comments |
 | `self_harm` | `Ram07/Detection-for-Suicide` | `class == suicide` | ~67k | MIT | **Provisional.** Label is the subreddit the post came from (r/SuicideWatch vs r/teenagers), not a per-post human judgment. Includes posts *about* someone else. A hand-labelled sample is needed to measure the noise. |
 
 Civil Comments scores are the fraction of ~10 human raters who applied the label, so `>= 0.5` means a majority agreed.
 
+Measuring-hate-speech (MHS) rows also carry the original annotators' 0–4 ratings (higher = worse, ~3.4 raters per comment). A rater agrees when they give 3 or 4. The label is `1` when at least half agree, `0` when none do, and `-1` when raters are split. Many MHS comments that are not hate speech are still insulting: 271 of 497 were rated toxic by a majority.
+
 **Deferred: `misinformation`.** Whether a post is false usually can't be judged from its text alone; it needs fact-checking against outside sources. No public human-labelled dataset of short posts passed the checks.
+
+**Out of scope: `sexual_content`.** Excluded by project decision. Data is available if it is added later: set `sexual_explicit >= 0.5` on `google/civil_comments` (~4.7k positives, CC0) and add the label to `data.labels`. Clean comments are still required to score below 0.1 on `sexual_explicit`.
 
 **Rejected candidates:**
 - `vibhorag101/suicide_prediction_dataset_phr`: text is lemmatized with stopwords removed, so it doesn't look like real posts.
@@ -102,10 +105,20 @@ Civil Comments scores are the fraction of ~10 human raters who applied the label
 `scripts/build_multilabel.py` combines the sources above into `data/multilabel.csv` (settings under `multilabel:` in `config.yaml`):
 
 - Each label column holds `1` (positive), `0` (negative) or `-1` (unknown: that source never annotated this label).
-- Civil Comments: up to 5,000 positives sampled per label, plus 10,000 clean comments scoring below 0.1 on every attribute. Comments scoring between 0.1 and 0.5 are left out, so they are never used as negatives.
+- Civil Comments: up to 5,000 positives sampled per configured label, plus 10,000 clean comments scoring below 0.1 on every attribute. Comments scoring between 0.1 and 0.5 are left out, so they are never used as negatives.
 - Self-harm: 5,000 posts from each class. SMS spam and Phase 1 data: all rows.
 - Duplicate texts and texts under 3 words are dropped. The `split` column fixes an 80/10/10 train/val/test split, stratified by source and by whether any label is positive.
 - The output file is excluded from git. Run the script to regenerate it.
+
+### Multi-label training
+
+`scripts/train_multilabel.py` fine-tunes a model with one sigmoid output per label (settings under `multilabel_training:` in `config.yaml`).
+
+- **Masked loss**: binary cross-entropy is computed only on known labels; `-1` entries are ignored.
+- **Metrics**: precision / recall / F1 per label, on rows where that label is known, plus macro F1. The best epoch by validation macro F1 is saved.
+- **Out-of-source flag rate**: for each label, the share of texts flagged from sources that never annotated it (e.g. spam on Civil Comments). A high rate means the model learned a source's writing style instead of the label.
+- **Outputs** in `save_dir`: model, `metrics.json`, `test_metrics.json`, `train_log.csv`, and `val_probs.csv` / `test_probs.csv` (per-label probabilities, used later for threshold tuning).
+- `max_train_rows` / `max_eval_rows` subsample each split proportionally by source, for quick CPU runs. Set them to `null` for a full run.
 
 ---
 
@@ -114,7 +127,7 @@ Civil Comments scores are the fraction of ~10 human raters who applied the label
 | Phase | Component | Status | Description |
 |---|---|---|---|
 | **Phase 1** | **Dataset & Data Pipeline** | ✅ **Completed** | Ingestion, pre-deduplication, auto-labelling, and cleaning pipeline (1,996 records) |
-| **Phase 2** | Model Fine-Tuning | 🟡 **In Progress** | ✅ DistilBERT binary baseline on human labels. ✅ Label scope defined (6 labels). ⏳ DeBERTa-v3 multi-label with focal loss & temperature scaling |
+| **Phase 2** | Model Fine-Tuning | 🟡 **In Progress** | ✅ DistilBERT binary baseline on human labels. ✅ Label scope defined (5 labels). ⏳ DeBERTa-v3 multi-label with focal loss & temperature scaling |
 | **Phase 3** | FastAPI Service & SHAP | ⏳ Planned | Real-time moderation API with token-level explainability |
 | **Phase 4** | AWS MLOps Deployment | ⏳ Planned | Docker container, ECR registry, EC2 instance, Redis caching |
 | **Phase 5** | Monitoring & CUPED A/B | ⏳ Planned | MMD embedding drift detection & variance-reduced A/B testing |
@@ -140,6 +153,7 @@ ClearSignal/
 │   ├── auto_label.py              # RoBERTa auto-labelling pipeline
 │   ├── clean_data.py              # Deduplication & text cleaner
 │   ├── build_multilabel.py        # Multi-label dataset builder (Phase 2)
+│   ├── train_multilabel.py        # Multi-label training with masked loss (Phase 2)
 │   └── train.py                   # DistilBERT fine-tuning & evaluation
 ├── .gitignore                     # Git exclusions for raw data and model weights
 └── README.md                      # Project documentation
@@ -177,7 +191,14 @@ python scripts/clean_data.py
 python scripts/build_multilabel.py
 ```
 
-### Training the Model
+### Training the Multi-Label Model
+
+```bash
+# Quick CPU run by default (6k training rows, 1 epoch). Saves to models/clearsignal-ml-v1
+python scripts/train_multilabel.py
+```
+
+### Training the Binary Model
 
 ```bash
 # Trains DistilBERT and saves to models/clearsignal-v2 (~20 min on CPU)

@@ -1,0 +1,87 @@
+{
+  "labels": [
+    "toxic",
+    "hate_speech",
+    "harassment",
+    "spam",
+    "self_harm"
+  ],
+  "test_rows": 2001,
+  "test_loss": 0.2819,
+  "test_macro_f1": 0.8483,
+  "test_per_label": {
+    "toxic": {
+      "precision": 0.8989,
+      "recall": 0.9231,
+      "f1": 0.9108,
+      "positives": 780,
+      "known_rows": 1260
+    },
+    "hate_speech": {
+      "precision": 0.828,
+      "recall": 0.7752,
+      "f1": 0.8007,
+      "positives": 298,
+      "known_rows": 1347
+    },
+    "harassment": {
+      "precision": 0.8419,
+      "recall": 0.8024,
+      "f1": 0.8217,
+      "positives": 491,
+      "known_rows": 1260
+    },
+    "spam": {
+      "precision": 0.9565,
+      "recall": 0.6875,
+      "f1": 0.8,
+      "positives": 32,
+      "known_rows": 221
+    },
+    "self_harm": {
+      "precision": 0.9167,
+      "recall": 0.9,
+      "f1": 0.9083,
+      "positives": 220,
+      "known_rows": 433
+    }
+  },
+  "out_of_source_flag_rate": {
+    "toxic": {
+      "mhs_clean": 0.7619,
+      "mhs_hate": 1.0,
+      "reddit_suicide": 0.5104,
+      "sms_spam": 0.1538,
+      "tweets_clean": 0.3182,
+      "tweets_hate": 0.4091
+    },
+    "hate_speech": {
+      "reddit_suicide": 0.0231,
+      "sms_spam": 0.0
+    },
+    "harassment": {
+      "mhs_clean": 0.381,
+      "mhs_hate": 0.7273,
+      "reddit_suicide": 0.4734,
+      "sms_spam": 0.0543,
+      "tweets_clean": 0.0455,
+      "tweets_hate": 0.0455
+    },
+    "spam": {
+      "civil_comments": 0.0,
+      "mhs_clean": 0.0,
+      "mhs_hate": 0.0,
+      "reddit_suicide": 0.0023,
+      "tweets_clean": 0.1818,
+      "tweets_hate": 0.2273
+    },
+    "self_harm": {
+      "civil_comments": 0.077,
+      "mhs_clean": 0.0476,
+      "mhs_hate": 0.0455,
+      "sms_spam": 0.0271,
+      "tweets_clean": 0.0455,
+      "tweets_hate": 0.0455
+    }
+  }
+}

@@ -23,6 +23,7 @@ def civil_comments_frame(labels, cfg, seed):
         "harassment": (df["insult"] >= threshold) | (df["threat"] >= threshold),
         "sexual_content": df["sexual_explicit"] >= threshold,
     }
+    rules = {name: mask for name, mask in rules.items() if name in labels}
     for name, mask in rules.items():
         df[name] = mask.astype(int)
 
@@ -49,12 +50,42 @@ def civil_comments_frame(labels, cfg, seed):
     return out
 
 
-def phase1_frame(labels, input_csv):
-    """Phase 1 tweets + measuring-hate-speech, human-annotated for hate speech only."""
+def mhs_rater_labels(cfg):
+    """Per-text toxic / harassment labels from measuring-hate-speech's own annotator ratings.
+
+    Ratings are 0-4, higher = worse. A rater "agrees" when they give >= rater_agree_min.
+    Label is 1 when at least positive_share of raters agree, 0 when none do, and
+    UNKNOWN when raters are split, mirroring the Civil Comments borderline exclusion.
+    """
+    print("Loading ucberkeley-dlab/measuring-hate-speech annotator ratings...", flush=True)
+    df = load_dataset("ucberkeley-dlab/measuring-hate-speech", split="train").to_pandas()
+    agree = cfg["rater_agree_min"]
+    df["toxic"] = ((df["insult"] >= agree) | (df["respect"] >= agree)).astype(float)
+    df["harassment"] = ((df["insult"] >= agree) | (df["violence"] >= agree)).astype(float)
+    share = df.groupby("text")[["toxic", "harassment"]].mean()
+
+    def to_label(s):
+        return np.where(s >= cfg["positive_share"], 1, np.where(s == 0, 0, UNKNOWN))
+
+    return share.apply(to_label).astype(int)
+
+
+def phase1_frame(labels, input_csv, mhs_cfg):
+    """Phase 1 tweets + measuring-hate-speech.
+
+    All rows are human-annotated for hate speech. MHS rows also get toxic / harassment
+    from their annotator ratings; tweets have no such ratings and stay UNKNOWN.
+    """
     df = pd.read_csv(input_csv)
     out = pd.DataFrame({"id": df["id"], "text": df["text"], "source": df["source"]})
     for name in labels:
         out[name] = df["human_label"].astype(int) if name == "hate_speech" else UNKNOWN
+
+    mhs_labels = mhs_rater_labels(mhs_cfg)
+    is_mhs = out["source"].str.startswith("mhs")
+    for name in mhs_labels.columns:
+        if name in labels:
+            out.loc[is_mhs, name] = out.loc[is_mhs, "text"].map(mhs_labels[name]).fillna(UNKNOWN).astype(int)
     return out
 
 
@@ -115,7 +146,7 @@ def build_multilabel(config_path="config.yaml"):
     seed = data_cfg["seed"]
 
     frames = [
-        phase1_frame(labels, data_cfg["input_csv"]),
+        phase1_frame(labels, data_cfg["input_csv"], ml_cfg["mhs"]),
         civil_comments_frame(labels, ml_cfg["civil_comments"], seed),
         sms_spam_frame(labels),
         self_harm_frame(labels, ml_cfg["self_harm"], seed),

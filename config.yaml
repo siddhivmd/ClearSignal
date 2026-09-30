@@ -24,6 +24,21 @@ multilabel:
     clean_samples: 10000
   self_harm:
     samples_per_class: 5000
+  mhs:
+    rater_agree_min: 3      # MHS ratings are 0-4 (higher = worse); 3 = agree, 4 = strongly agree
+    positive_share: 0.5     # share of raters who must agree for a positive label
+
+multilabel_training:
+  model_name: "distilbert-base-uncased"
+  max_length: 128
+  # Quick CPU sanity run. For the full run (Colab GPU) set both to null and epochs to 2-3.
+  max_train_rows: 6000
+  max_eval_rows: 2000
+  epochs: 1
+  batch_size: 16
+  learning_rate: 5.0e-5
+  weight_decay: 0.01
+  save_dir: "models/clearsignal-ml-v2"
 
 training:
   epochs: 3
