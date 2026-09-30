@@ -1,0 +1,20 @@
+model:
+  name: "distilbert-base-uncased"
+  num_labels: 2
+  max_length: 128
+
+data:
+  input_csv: "data/custom_labels_clean.csv"
+  binary_csv: "data/custom_labels_binary.csv"
+  label_source: "human"   # "human" = source dataset annotations, "auto" = RoBERTa auto-labels
+  train_split: 0.8
+  val_split: 0.1
+  test_split: 0.1
+  seed: 42
+
+training:
+  epochs: 3
+  batch_size: 16
+  learning_rate: 2.0e-5
+  weight_decay: 0.01
+  save_dir: "models/clearsignal-v2"

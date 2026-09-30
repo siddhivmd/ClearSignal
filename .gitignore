@@ -22,3 +22,6 @@ data/*.parquet
 .vscode/
 .idea/
 *.log
+
+# Model weights (too large for GitHub; store on HF Hub or LFS)
+models/*/model.safetensors

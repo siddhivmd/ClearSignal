@@ -1,0 +1,38 @@
+{
+  "label_source": "human",
+  "test_size": 200,
+  "distilbert": {
+    "accuracy": 0.755,
+    "precision_flagged": 0.7383,
+    "recall_flagged": 0.79,
+    "f1_flagged": 0.7633,
+    "macro_f1": 0.7547,
+    "confusion_matrix": [
+      [
+        72,
+        28
+      ],
+      [
+        21,
+        79
+      ]
+    ]
+  },
+  "roberta_teacher": {
+    "accuracy": 0.735,
+    "precision_flagged": 0.8406,
+    "recall_flagged": 0.58,
+    "f1_flagged": 0.6864,
+    "macro_f1": 0.7285,
+    "confusion_matrix": [
+      [
+        89,
+        11
+      ],
+      [
+        42,
+        58
+      ]
+    ]
+  }
+}

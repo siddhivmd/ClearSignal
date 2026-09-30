@@ -1,0 +1,8 @@
+{
+  "epoch": 2,
+  "best_val_loss": 0.2638,
+  "best_val_accuracy": 0.89,
+  "best_val_precision": 0.8235,
+  "best_val_recall": 0.8485,
+  "best_val_f1": 0.8358
+}

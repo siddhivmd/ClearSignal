@@ -46,6 +46,8 @@ def auto_label_data():
                 item_res = {
                     "id": item.get("id"),
                     "text": item.get("text", ""),
+                    "source": item.get("source"),
+                    "human_label": item.get("human_label"),
                     "labels": labels,
                     "hate_score": round(hate_score, 4),
                     "confidence": 2,

@@ -35,7 +35,7 @@ def clean_data():
             lambda l: ",".join(l) if isinstance(l, list) else str(l)
         )
 
-    cols = ["id", "text", "labels", "hate_score", "confidence"]
+    cols = ["id", "text", "source", "human_label", "labels", "hate_score", "confidence"]
     available_cols = [c for c in cols if c in df.columns]
     clean_df = df[available_cols]
 
