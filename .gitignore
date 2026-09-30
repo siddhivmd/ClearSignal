@@ -25,3 +25,6 @@ data/*.parquet
 
 # Model weights (too large for GitHub; store on HF Hub or LFS)
 models/*/model.safetensors
+
+# Multi-label dataset (tens of MB; regenerate with scripts/build_multilabel.py)
+data/multilabel.csv

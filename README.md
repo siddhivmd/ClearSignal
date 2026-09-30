@@ -73,12 +73,48 @@ With 200 test texts, differences of a few points are within noise. The recall ga
 
 ---
 
+## Label Scope (Phase 2 Multi-Label)
+
+The multi-label model targets 6 labels, listed under `data.labels` in `config.yaml`. `clean` is not a separate output: a text is clean when no label is positive. Every label comes from human judgments, not model predictions.
+
+| Label | Source dataset | Rule | Positives | Licence | Caveat |
+|---|---|---|---|---|---|
+| `toxic` | `google/civil_comments` | `toxicity >= 0.5` | ~144k | CC0 | News-site comments |
+| `hate_speech` | `google/civil_comments` + Phase 1 datasets | `identity_attack >= 0.5`; Phase 1 `human_label` | ~13k + 999 | CC0 / dataset licences | |
+| `harassment` | `google/civil_comments` | `insult >= 0.5` or `threat >= 0.5` | ~107k | CC0 | |
+| `sexual_content` | `google/civil_comments` | `sexual_explicit >= 0.5` | ~4.7k | CC0 | Rarest Civil Comments label |
+| `spam` | `codesignal/sms-spam-collection` | `label == spam` | ~750 | CC BY 4.0 | SMS messages, not comments |
+| `self_harm` | `Ram07/Detection-for-Suicide` | `class == suicide` | ~67k | MIT | **Provisional.** Label is the subreddit the post came from (r/SuicideWatch vs r/teenagers), not a per-post human judgment. Includes posts *about* someone else. A hand-labelled sample is needed to measure the noise. |
+
+Civil Comments scores are the fraction of ~10 human raters who applied the label, so `>= 0.5` means a majority agreed.
+
+**Deferred: `misinformation`.** Whether a post is false usually can't be judged from its text alone; it needs fact-checking against outside sources. No public human-labelled dataset of short posts passed the checks.
+
+**Rejected candidates:**
+- `vibhorag101/suicide_prediction_dataset_phr`: text is lemmatized with stopwords removed, so it doesn't look like real posts.
+- `av9ash/CSSR-S_labelled_suicidewatch_posts_reddit`: labelled by LLMs, not people.
+- `ucirvine/sms_spam`: licence listed as unknown. `codesignal/sms-spam-collection` has the same data under CC BY 4.0.
+
+**Missing labels:** each dataset only annotates some labels (an SMS was never rated for hate speech). Unannotated labels are treated as *unknown*, not negative, and are masked out of the training loss.
+
+### Building the multi-label dataset
+
+`scripts/build_multilabel.py` combines the sources above into `data/multilabel.csv` (settings under `multilabel:` in `config.yaml`):
+
+- Each label column holds `1` (positive), `0` (negative) or `-1` (unknown: that source never annotated this label).
+- Civil Comments: up to 5,000 positives sampled per label, plus 10,000 clean comments scoring below 0.1 on every attribute. Comments scoring between 0.1 and 0.5 are left out, so they are never used as negatives.
+- Self-harm: 5,000 posts from each class. SMS spam and Phase 1 data: all rows.
+- Duplicate texts and texts under 3 words are dropped. The `split` column fixes an 80/10/10 train/val/test split, stratified by source and by whether any label is positive.
+- The output file is excluded from git. Run the script to regenerate it.
+
+---
+
 ## Roadmap & Phase Status
 
 | Phase | Component | Status | Description |
 |---|---|---|---|
 | **Phase 1** | **Dataset & Data Pipeline** | ✅ **Completed** | Ingestion, pre-deduplication, auto-labelling, and cleaning pipeline (1,996 records) |
-| **Phase 2** | Model Fine-Tuning | 🟡 **In Progress** | ✅ DistilBERT binary baseline on human labels. ⏳ DeBERTa-v3 multi-label with focal loss & temperature scaling |
+| **Phase 2** | Model Fine-Tuning | 🟡 **In Progress** | ✅ DistilBERT binary baseline on human labels. ✅ Label scope defined (6 labels). ⏳ DeBERTa-v3 multi-label with focal loss & temperature scaling |
 | **Phase 3** | FastAPI Service & SHAP | ⏳ Planned | Real-time moderation API with token-level explainability |
 | **Phase 4** | AWS MLOps Deployment | ⏳ Planned | Docker container, ECR registry, EC2 instance, Redis caching |
 | **Phase 5** | Monitoring & CUPED A/B | ⏳ Planned | MMD embedding drift detection & variance-reduced A/B testing |
@@ -93,6 +129,7 @@ ClearSignal/
 ├── data/
 │   ├── custom_labels_clean.csv    # Cleaned dataset with human + auto labels (1,996 records)
 │   ├── custom_labels_binary.csv   # Binary training dataset (written by train.py)
+│   ├── multilabel.csv             # Excluded by .gitignore (written by build_multilabel.py)
 │   ├── to_label.json              # Excluded by .gitignore (raw aggregated)
 │   └── auto_labelled.json         # Excluded by .gitignore (intermediate)
 ├── models/
@@ -102,6 +139,7 @@ ClearSignal/
 │   ├── prepare_data.py            # Dataset downloader & aggregator
 │   ├── auto_label.py              # RoBERTa auto-labelling pipeline
 │   ├── clean_data.py              # Deduplication & text cleaner
+│   ├── build_multilabel.py        # Multi-label dataset builder (Phase 2)
 │   └── train.py                   # DistilBERT fine-tuning & evaluation
 ├── .gitignore                     # Git exclusions for raw data and model weights
 └── README.md                      # Project documentation
@@ -130,6 +168,13 @@ python scripts/auto_label.py
 
 # 3. Clean dataset & export CSV
 python scripts/clean_data.py
+```
+
+### Building the Multi-Label Dataset
+
+```bash
+# Downloads Civil Comments (~1.8M rows), SMS spam and Reddit data, writes data/multilabel.csv
+python scripts/build_multilabel.py
 ```
 
 ### Training the Model

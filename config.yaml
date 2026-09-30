@@ -11,6 +11,19 @@ data:
   val_split: 0.1
   test_split: 0.1
   seed: 42
+  # Phase 2 multi-label scope (see README "Label Scope"). "clean" = no label is positive.
+  # misinformation is deferred: no public human-labelled dataset fits this task.
+  labels: ["toxic", "hate_speech", "harassment", "sexual_content", "spam", "self_harm"]
+
+multilabel:
+  output_csv: "data/multilabel.csv"
+  civil_comments:
+    threshold: 0.5          # fraction of raters needed for a positive label
+    clean_max_score: 0.1    # "clean" comments must score below this on every attribute
+    samples_per_label: 5000 # max positives sampled per label
+    clean_samples: 10000
+  self_harm:
+    samples_per_class: 5000
 
 training:
   epochs: 3
