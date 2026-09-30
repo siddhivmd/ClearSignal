@@ -13,7 +13,7 @@ data:
   seed: 42
   # Phase 2 multi-label scope (see README "Label Scope"). "clean" = no label is positive.
   # misinformation is deferred: no public human-labelled dataset fits this task.
-  labels: ["toxic", "hate_speech", "harassment", "sexual_content", "spam", "self_harm"]
+  labels: ["toxic", "hate_speech", "harassment", "spam", "self_harm"]
 
 multilabel:
   output_csv: "data/multilabel.csv"
