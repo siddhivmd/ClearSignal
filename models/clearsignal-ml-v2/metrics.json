@@ -1,0 +1,42 @@
+{
+  "epoch": 1,
+  "val_loss": 0.2492,
+  "val_macro_f1": 0.8904,
+  "val_per_label": {
+    "toxic": {
+      "precision": 0.8964,
+      "recall": 0.9209,
+      "f1": 0.9085,
+      "positives": 733,
+      "known_rows": 1227
+    },
+    "hate_speech": {
+      "precision": 0.8379,
+      "recall": 0.8131,
+      "f1": 0.8253,
+      "positives": 337,
+      "known_rows": 1277
+    },
+    "harassment": {
+      "precision": 0.8583,
+      "recall": 0.7788,
+      "f1": 0.8167,
+      "positives": 529,
+      "known_rows": 1227
+    },
+    "spam": {
+      "precision": 1.0,
+      "recall": 0.9231,
+      "f1": 0.96,
+      "positives": 26,
+      "known_rows": 245
+    },
+    "self_harm": {
+      "precision": 0.9341,
+      "recall": 0.9488,
+      "f1": 0.9414,
+      "positives": 254,
+      "known_rows": 478
+    }
+  }
+}

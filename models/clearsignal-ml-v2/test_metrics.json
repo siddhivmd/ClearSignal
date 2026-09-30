@@ -1,0 +1,162 @@
+{
+  "labels": [
+    "toxic",
+    "hate_speech",
+    "harassment",
+    "spam",
+    "self_harm"
+  ],
+  "test_rows": 2000,
+  "test_loss": 0.2591,
+  "test_macro_f1": 0.871,
+  "test_per_label": {
+    "toxic": {
+      "precision": 0.8794,
+      "recall": 0.9232,
+      "f1": 0.9008,
+      "positives": 703,
+      "known_rows": 1227
+    },
+    "hate_speech": {
+      "precision": 0.8205,
+      "recall": 0.795,
+      "f1": 0.8076,
+      "positives": 322,
+      "known_rows": 1277
+    },
+    "harassment": {
+      "precision": 0.8554,
+      "recall": 0.8263,
+      "f1": 0.8406,
+      "positives": 501,
+      "known_rows": 1228
+    },
+    "spam": {
+      "precision": 1.0,
+      "recall": 0.8,
+      "f1": 0.8889,
+      "positives": 30,
+      "known_rows": 244
+    },
+    "self_harm": {
+      "precision": 0.9243,
+      "recall": 0.9098,
+      "f1": 0.917,
+      "positives": 255,
+      "known_rows": 479
+    }
+  },
+  "test_f1_per_source": {
+    "toxic": {
+      "civil_comments": {
+        "f1": 0.9036,
+        "positives": 670,
+        "rows": 1181
+      },
+      "mhs_clean": {
+        "f1": 0.5833,
+        "positives": 9,
+        "rows": 22
+      },
+      "mhs_hate": {
+        "f1": 0.9787,
+        "positives": 24,
+        "rows": 24
+      }
+    },
+    "hate_speech": {
+      "civil_comments": {
+        "f1": 0.8551,
+        "positives": 274,
+        "rows": 1181
+      },
+      "mhs_clean": {
+        "f1": 0.0,
+        "positives": 0,
+        "rows": 24
+      },
+      "mhs_hate": {
+        "f1": 0.5455,
+        "positives": 24,
+        "rows": 24
+      },
+      "tweets_clean": {
+        "f1": 0.0,
+        "positives": 0,
+        "rows": 24
+      },
+      "tweets_hate": {
+        "f1": 0.6286,
+        "positives": 24,
+        "rows": 24
+      }
+    },
+    "harassment": {
+      "civil_comments": {
+        "f1": 0.8427,
+        "positives": 469,
+        "rows": 1181
+      },
+      "mhs_clean": {
+        "f1": 0.5714,
+        "positives": 8,
+        "rows": 23
+      },
+      "mhs_hate": {
+        "f1": 0.8837,
+        "positives": 24,
+        "rows": 24
+      }
+    },
+    "spam": {
+      "sms_spam": {
+        "f1": 0.8889,
+        "positives": 30,
+        "rows": 244
+      }
+    },
+    "self_harm": {
+      "reddit_suicide": {
+        "f1": 0.917,
+        "positives": 255,
+        "rows": 479
+      }
+    }
+  },
+  "out_of_source_flag_rate": {
+    "toxic": {
+      "mhs_clean": 0.5,
+      "reddit_suicide": 0.3633,
+      "sms_spam": 0.0943,
+      "tweets_clean": 0.2917,
+      "tweets_hate": 0.75
+    },
+    "hate_speech": {
+      "reddit_suicide": 0.0209,
+      "sms_spam": 0.0041
+    },
+    "harassment": {
+      "mhs_clean": 0.0,
+      "reddit_suicide": 0.309,
+      "sms_spam": 0.0738,
+      "tweets_clean": 0.1667,
+      "tweets_hate": 0.4167
+    },
+    "spam": {
+      "civil_comments": 0.0008,
+      "mhs_clean": 0.0,
+      "mhs_hate": 0.0417,
+      "reddit_suicide": 0.0,
+      "tweets_clean": 0.1667,
+      "tweets_hate": 0.2917
+    },
+    "self_harm": {
+      "civil_comments": 0.1219,
+      "mhs_clean": 0.0,
+      "mhs_hate": 0.0417,
+      "sms_spam": 0.041,
+      "tweets_clean": 0.0,
+      "tweets_hate": 0.0
+    }
+  }
+}
